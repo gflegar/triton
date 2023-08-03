@@ -1253,3 +1253,18 @@ module attributes {"triton_gpu.num-warps" = 1 : i32} {
     tt.return
   }
 }
+
+// -----
+#blocked = #triton_gpu.blocked<{sizePerThread = [1, 1], threadsPerWarp = [4, 1], warpsPerCTA = [1, 1], order = [0, 1]}>
+#slice = #triton_gpu.slice<{dim = 1, parent = #blocked}>
+module attributes {"triton_gpu.num-warps" = 1 : i32} {
+  tt.func public @reduce_within_warp(%arg: tensor<4x1xi1, #blocked>) {
+    // CHECK-NOT: nvvm.barrier0
+    %24 = "tt.reduce"(%arg) <{axis = 1 : i32}> ({
+    ^bb0(%arg4: i1, %arg5: i1):
+      %48 = arith.ori %arg4, %arg5 : i1
+      tt.reduce.return %48 : i1
+    }) : (tensor<4x1xi1, #blocked>) -> tensor<4xi1, #slice>
+    tt.return
+  }
+}

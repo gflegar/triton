@@ -8,6 +8,8 @@
 #include "triton/Tools/Sys/GetEnv.hpp"
 #include <deque>
 
+#include "llvm/Support/Debug.h"
+
 namespace mlir {
 
 namespace {
@@ -30,6 +32,9 @@ SmallVector<unsigned> getParentOrder(Attribute layout) {
 } // namespace
 
 bool ReduceOpHelper::isFastReduction() {
+  // We don't need shared memory reduction if everything is within a single
+  // warp
+  // if (getIntraWarpSize() == 1) return true;
   // Disable fast reduction only for debugging purpose
   if (::triton::tools::getBoolEnv("DISABLE_FAST_REDUCTION"))
     return false;
@@ -125,7 +130,7 @@ unsigned ReduceOpHelper::getScratchSizeInBytes() {
 
   unsigned bytesPerElem = 0;
   for (const auto &ty : srcElementTypes) {
-    bytesPerElem += ty.getIntOrFloatBitWidth() / 8;
+    bytesPerElem += (ty.getIntOrFloatBitWidth() + 7) / 8;
   }
   return bytesPerElem * elems;
 }
