@@ -23,7 +23,7 @@ from ..runtime.cache import get_cache_manager, get_dump_manager, get_override_ma
 from ..runtime.driver import driver
 from ..runtime.jit import (JITFunction, get_cuda_stream, get_current_device,
                            get_device_capability, version_key)
-from ..tools.disasm import get_sass
+# from ..tools.disasm import get_sass
 from .code_generator import ast_to_ttir
 from .make_launcher import make_stub
 from .utils import (InfoFromBackendForTensorMap, TensorMapManager,
@@ -525,7 +525,9 @@ def compile(fn, **kwargs):
             asm[ir_name] = next_module
             sass_ir = "sass"
             sass_fname = f"{name}.{sass_ir}"
-            asm[sass_ir] = get_sass(next_module)
+            # Workaround for can't find `cuobjdump` - I don't need a SASS dump
+            # so much that I would bother putting it on path :)
+            asm[sass_ir] = ""  # get_sass(next_module)
             metadata_group[sass_fname] = fn_cache_manager.put(asm[sass_ir], sass_fname)
 
         elif ir_name == "amdgcn":
